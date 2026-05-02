@@ -48,7 +48,10 @@ if [[ ! -d "$OUTPUT_DIR" ]]; then
     exit 1
 fi
 
-mapfile -t docx_files < <(find "$OUTPUT_DIR" -maxdepth 1 -name "*.docx" ! -name ".tmp_*" | sort)
+docx_files=()
+while IFS= read -r file; do
+    docx_files+=("$file")
+done < <(find "$OUTPUT_DIR" -maxdepth 1 -name "*.docx" ! -name ".tmp_*" | sort)
 
 if [[ ${#docx_files[@]} -eq 0 ]]; then
     echo "No .docx files found in output/. Run ./generate.sh first."
