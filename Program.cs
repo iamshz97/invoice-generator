@@ -89,9 +89,8 @@ foreach (DateTime target in months)
 
     Console.WriteLine($"Output:    {outputDocx}");
 
-    string? pdfPath = ConvertToPdf(outputDocx, outputFolder);
-    if (pdfPath is not null)
-        Console.WriteLine($"PDF:       {pdfPath}");
+    string pdfPath = ConvertToPdf(outputDocx, outputFolder);
+    Console.WriteLine($"PDF:       {pdfPath}");
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -215,26 +214,27 @@ static string NormalizeSplitPlaceholders(string xml)
 
 /// <summary>
 /// Converts the .docx to PDF using LibreOffice's headless mode.
-/// Returns the PDF path on success, or null if LibreOffice is not found.
-/// Requires LibreOffice to be installed:
-///   brew install --cask libreoffice
+/// Throws if LibreOffice is not installed or conversion fails.
 /// </summary>
-static string? ConvertToPdf(string docxPath, string outputFolder)
+static string ConvertToPdf(string docxPath, string outputFolder)
 {
     string? soffice = FindLibreOffice();
 
     if (soffice is null)
     {
-        Console.WriteLine();
-        Console.WriteLine("LibreOffice not found — PDF conversion skipped.");
-        if (OperatingSystem.IsWindows())
-            Console.WriteLine("Install it from: https://www.libreoffice.org/download/download-libreoffice/");
-        else if (OperatingSystem.IsMacOS())
-            Console.WriteLine("Install it with:  brew install --cask libreoffice");
-        else
-            Console.WriteLine("Install it with:  sudo apt install libreoffice  (or your distro's package manager)");
-        Console.WriteLine($"The .docx is ready at: {docxPath}");
-        return null;
+        string installHint = OperatingSystem.IsWindows()
+            ? "Download from: https://www.libreoffice.org/download/download-libreoffice/"
+            : OperatingSystem.IsMacOS()
+                ? "Install with:  brew install --cask libreoffice"
+                : "Install with:  sudo apt install libreoffice  (or your distro's package manager)";
+
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.Error.WriteLine();
+        Console.Error.WriteLine("ERROR: LibreOffice is not installed or could not be found.");
+        Console.Error.WriteLine(installHint);
+        Console.ResetColor();
+        Environment.Exit(1);
+        return null!; // unreachable — satisfies the compiler
     }
 
     Console.WriteLine($"Converting to PDF using LibreOffice ({soffice}) …");
@@ -266,29 +266,12 @@ static string? ConvertToPdf(string docxPath, string outputFolder)
 }
 
 /// <summary>
-/// Locates the LibreOffice <c>soffice</c> binary on macOS (and falls back to
-/// common Linux / PATH locations).
+/// Locates the LibreOffice <c>soffice</c> binary by checking well-known
+/// installation paths for the current OS, then falling back to PATH.
 /// </summary>
 static string? FindLibreOffice()
 {
-    string[] candidates = OperatingSystem.IsWindows()
-        ? [
-            // Windows default installation paths (64-bit and 32-bit)
-            @"C:\Program Files\LibreOffice\program\soffice.exe",
-            @"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
-        ]
-        : OperatingSystem.IsMacOS()
-        ? [
-            // macOS default app bundle
-            "/Applications/LibreOffice.app/Contents/MacOS/soffice",
-            "/usr/local/bin/soffice",
-        ]
-        : [
-            // Linux common paths
-            "/usr/bin/soffice",
-            "/usr/local/bin/soffice",
-            "/opt/libreoffice/program/soffice",
-        ];
+    string[] candidates = GetLibreOfficeCandidatePaths();
 
     foreach (string candidate in candidates)
     {
@@ -296,16 +279,47 @@ static string? FindLibreOffice()
             return candidate;
     }
 
-    // Last resort: check PATH using where (Windows) or which (macOS/Linux)
-    string pathTool = OperatingSystem.IsWindows() ? "where" : "which";
-    var which = Process.Start(new ProcessStartInfo
+    // Last resort: ask the shell whether soffice is on PATH
+    return FindOnPath();
+}
+
+static string[] GetLibreOfficeCandidatePaths()
+{
+    if (OperatingSystem.IsWindows())
+        return [
+            @"C:\Program Files\LibreOffice\program\soffice.exe",
+            @"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
+        ];
+
+    if (OperatingSystem.IsMacOS())
+        return [
+            "/Applications/LibreOffice.app/Contents/MacOS/soffice",
+            "/usr/local/bin/soffice",
+        ];
+
+    // Linux
+    return [
+        "/usr/bin/soffice",
+        "/usr/local/bin/soffice",
+        "/opt/libreoffice/program/soffice",
+    ];
+}
+
+static string? FindOnPath()
+{
+    string tool = OperatingSystem.IsWindows() ? "where" : "which";
+    string arg  = OperatingSystem.IsWindows() ? "soffice.exe" : "soffice";
+
+    using var proc = Process.Start(new ProcessStartInfo
     {
-        FileName  = pathTool,
-        Arguments = OperatingSystem.IsWindows() ? "soffice.exe" : "soffice",
+        FileName               = tool,
+        Arguments              = arg,
         RedirectStandardOutput = true,
-        UseShellExecute = false
+        UseShellExecute        = false
     });
-    which?.WaitForExit();
-    string? found = which?.StandardOutput.ReadToEnd().Trim().Split('\n')[0].Trim();
+    proc?.WaitForExit();
+
+    // `where` may return multiple lines — take only the first hit
+    string? found = proc?.StandardOutput.ReadToEnd().Trim().Split('\n')[0].Trim();
     return string.IsNullOrEmpty(found) ? null : found;
 }
