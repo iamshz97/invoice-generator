@@ -61,7 +61,7 @@ Generated `.docx` files are saved to the `output/` folder.
 ```bash
 ./convert-to-pdf.sh
 ```
-Lists all `.docx` files in `output/` and lets you convert all or pick specific ones.
+Lists all `.docx` files in `output/` and lets you convert all or pick specific ones. PDFs are saved to the `PDFs/` folder.
 
 > Requires LibreOffice: `brew install --cask libreoffice`
 
@@ -121,6 +121,7 @@ invoice-generator/
 ├── InvoiceTemplate.docx             # Word template with placeholders
 ├── generate.sh                      # Interactive invoice generation script
 ├── convert-to-pdf.sh                # Interactive batch PDF conversion script
-├── output/                          # Generated invoices (gitignored)
+├── output/                          # Generated .docx invoices (gitignored)
+├── PDFs/                            # Generated .pdf invoices (gitignored)
 └── old-examples/                    # Reference PDFs from previous months
 ```

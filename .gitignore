@@ -2,8 +2,9 @@
 bin/
 obj/
 
-# Generated invoices (keep out of source control)
+# Generated invoices and PDFs (keep out of source control)
 output/
+PDFs/
 
 # Personal configuration — copy appsettings.local.template.json,
 # rename to appsettings.local.json, and fill in your details.

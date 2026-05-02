@@ -6,12 +6,16 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUTPUT_DIR="$SCRIPT_DIR/output"
+PDF_DIR="$SCRIPT_DIR/PDFs"
 
 echo ""
 echo "╔══════════════════════════════════════╗"
 echo "║       PDF Converter                  ║"
 echo "╚══════════════════════════════════════╝"
 echo ""
+
+# Create PDFs folder if it doesn't exist
+mkdir -p "$PDF_DIR"
 
 # ── Locate LibreOffice ────────────────────────────────────────────────────────
 SOFFICE=""
@@ -100,10 +104,10 @@ failed=0
 
 for docx in "${selected_files[@]}"; do
     base="$(basename "$docx")"
-    pdf="$OUTPUT_DIR/${base%.docx}.pdf"
+    pdf="$PDF_DIR/${base%.docx}.pdf"
     echo -n "Converting $base ... "
 
-    if "$SOFFICE" --headless --convert-to pdf --outdir "$OUTPUT_DIR" "$docx" > /dev/null 2>&1; then
+    if "$SOFFICE" --headless --convert-to pdf --outdir "$PDF_DIR" "$docx" > /dev/null 2>&1; then
         echo "done → $(basename "$pdf")"
         ((success++))
     else
@@ -115,4 +119,4 @@ done
 echo ""
 echo "Converted: $success file(s)"
 [[ $failed -gt 0 ]] && echo "Failed:    $failed file(s)"
-echo "PDFs saved to: $OUTPUT_DIR"
+echo "PDFs saved to: $PDF_DIR"
