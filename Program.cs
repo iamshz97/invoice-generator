@@ -199,6 +199,17 @@ static string NormalizeSplitPlaceholders(string xml)
 
     xml = Regex.Replace(xml, patternC, "<w:t>$1$2}}</w:t></w:r>", RegexOptions.Singleline);
 
+    // Pattern D: mid-name split with closing braces attached to second fragment
+    //   e.g. <w:t>{{SwiftCo</w:t></w:r>
+    //        <w:proofErr w:type="spellEnd"/>
+    //        <w:r ...><w:rPr>...</w:rPr><w:t>de}}</w:t></w:r>
+    const string patternD =
+        @"<w:t>(\{\{\w+)</w:t></w:r>" +
+        @"<w:proofErr[^/]*/>" +
+        @"<w:r[^>]*><w:rPr>.*?</w:rPr><w:t>(\w+\}\})</w:t></w:r>";
+
+    xml = Regex.Replace(xml, patternD, "<w:t>$1$2</w:t></w:r>", RegexOptions.Singleline);
+
     return xml;
 }
 
