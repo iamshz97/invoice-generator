@@ -227,7 +227,12 @@ static string? ConvertToPdf(string docxPath, string outputFolder)
     {
         Console.WriteLine();
         Console.WriteLine("LibreOffice not found — PDF conversion skipped.");
-        Console.WriteLine("Install it with:  brew install --cask libreoffice");
+        if (OperatingSystem.IsWindows())
+            Console.WriteLine("Install it from: https://www.libreoffice.org/download/download-libreoffice/");
+        else if (OperatingSystem.IsMacOS())
+            Console.WriteLine("Install it with:  brew install --cask libreoffice");
+        else
+            Console.WriteLine("Install it with:  sudo apt install libreoffice  (or your distro's package manager)");
         Console.WriteLine($"The .docx is ready at: {docxPath}");
         return null;
     }
@@ -266,15 +271,24 @@ static string? ConvertToPdf(string docxPath, string outputFolder)
 /// </summary>
 static string? FindLibreOffice()
 {
-    string[] candidates =
-    [
-        // macOS default installation path
-        "/Applications/LibreOffice.app/Contents/MacOS/soffice",
-        // Homebrew / Linux common paths
-        "/usr/local/bin/soffice",
-        "/usr/bin/soffice",
-        "/opt/libreoffice/program/soffice",
-    ];
+    string[] candidates = OperatingSystem.IsWindows()
+        ? [
+            // Windows default installation paths (64-bit and 32-bit)
+            @"C:\Program Files\LibreOffice\program\soffice.exe",
+            @"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
+        ]
+        : OperatingSystem.IsMacOS()
+        ? [
+            // macOS default app bundle
+            "/Applications/LibreOffice.app/Contents/MacOS/soffice",
+            "/usr/local/bin/soffice",
+        ]
+        : [
+            // Linux common paths
+            "/usr/bin/soffice",
+            "/usr/local/bin/soffice",
+            "/opt/libreoffice/program/soffice",
+        ];
 
     foreach (string candidate in candidates)
     {
@@ -282,15 +296,16 @@ static string? FindLibreOffice()
             return candidate;
     }
 
-    // Last resort: check PATH
+    // Last resort: check PATH using where (Windows) or which (macOS/Linux)
+    string pathTool = OperatingSystem.IsWindows() ? "where" : "which";
     var which = Process.Start(new ProcessStartInfo
     {
-        FileName  = "which",
-        Arguments = "soffice",
+        FileName  = pathTool,
+        Arguments = OperatingSystem.IsWindows() ? "soffice.exe" : "soffice",
         RedirectStandardOutput = true,
         UseShellExecute = false
     });
     which?.WaitForExit();
-    string? found = which?.StandardOutput.ReadToEnd().Trim();
+    string? found = which?.StandardOutput.ReadToEnd().Trim().Split('\n')[0].Trim();
     return string.IsNullOrEmpty(found) ? null : found;
 }

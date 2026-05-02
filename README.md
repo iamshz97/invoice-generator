@@ -7,9 +7,11 @@ A cross-platform .NET 8 console app that generates invoices by filling placehold
 - [.NET 8 SDK](https://dotnet.microsoft.com/download)
 - [LibreOffice](https://www.libreoffice.org/) (for PDF conversion)
 
-```bash
-brew install --cask libreoffice
-```
+| OS | Install |
+|---|---|
+| macOS | `brew install --cask libreoffice` |
+| Windows | [Download installer](https://www.libreoffice.org/download/download-libreoffice/) |
+| Linux | `sudo apt install libreoffice` |
 
 ## Usage
 
@@ -37,7 +39,11 @@ Then edit `appsettings.local.json` with your name, bank details, and customer ad
 
 **Interactive (recommended):**
 ```bash
+# macOS / Linux
 ./generate.sh
+
+# Windows (PowerShell)
+.\generate.ps1
 ```
 The script will ask whether to generate the current month or let you enter one or more specific months.
 
@@ -59,11 +65,13 @@ Generated `.docx` files are saved to the `output/` folder.
 
 **Interactive:**
 ```bash
+# macOS / Linux
 ./convert-to-pdf.sh
+
+# Windows (PowerShell)
+.\convert-to-pdf.ps1
 ```
 Lists all `.docx` files in `output/` and lets you convert all or pick specific ones. PDFs are saved to the `PDFs/` folder.
-
-> Requires LibreOffice: `brew install --cask libreoffice`
 
 ## Invoice Number History
 
@@ -119,8 +127,10 @@ invoice-generator/
 ├── appsettings.local.json           # Personal config — gitignored, create from template
 ├── appsettings.local.template.json  # Blank personal config template (committed)
 ├── InvoiceTemplate.docx             # Word template with placeholders
-├── generate.sh                      # Interactive invoice generation script
-├── convert-to-pdf.sh                # Interactive batch PDF conversion script
+├── generate.sh                      # Interactive generation script (macOS/Linux)
+├── generate.ps1                     # Interactive generation script (Windows PowerShell)
+├── convert-to-pdf.sh                # Batch PDF conversion script (macOS/Linux)
+├── convert-to-pdf.ps1               # Batch PDF conversion script (Windows PowerShell)
 ├── output/                          # Generated .docx invoices (gitignored)
 ├── PDFs/                            # Generated .pdf invoices (gitignored)
 └── old-examples/                    # Reference PDFs from previous months
