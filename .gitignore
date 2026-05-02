@@ -1,0 +1,14 @@
+# .NET build artifacts
+bin/
+obj/
+
+# Generated invoices (keep out of source control)
+output/
+
+# Personal configuration — copy appsettings.local.template.json,
+# rename to appsettings.local.json, and fill in your details.
+appsettings.local.json
+
+# macOS metadata
+.DS_Store
+*~$*.docx
